@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Verifiable Credentials - Microsoft Entra Verified ID</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 32px;
+            line-height: 1.4;
+        }
+
+        .container {
+            max-width: 1400px;
+            width: 85%;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 100%;
+            max-width: 800px;
+            min-width: 600px;
+            min-height: 700px;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+            color: white;
+            padding: 40px 48px;
+            position: relative;
+        }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .card-header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-header p {
+            font-size: 18px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-content {
+            padding: 48px;
+        }
+
+        .user-profile {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 36px;
+        }
+
+        .user-profile h3 {
+            color: #495057;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .profile-field {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .profile-field:last-child {
+            border-bottom: none;
+        }
+
+        .field-label {
+            font-weight: 500;
+            color: #6c757d;
+            font-size: 16px;
+            min-width: 100px;
+        }
+
+        .field-value {
+            color: #495057;
+            font-size: 16px;
+            font-weight: 500;
+            text-align: right;
+            flex: 1;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .user-details {
+            display: grid;
+            gap: 12px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 500;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .detail-value {
+            color: #495057;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .action-section {
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px 24px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .section-header h3 {
+            color: #495057;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+            text-align: center;
+        }
+
+        .section-content {
+            padding: 32px 24px;
+        }
+
+        .description {
+            color: #6c757d;
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 28px;
+        }
+
+        .primary-button {
+            background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 18px 36px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .primary-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .primary-button:hover::before {
+            left: 100%;
+        }
+
+        .primary-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+        }
+
+        .primary-button:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .qr-section {
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+            display: none;
+        }
+
+        .qr-code-section {
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .qr-section-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .qr-section-header h3 {
+            color: #495057;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .qr-section-header p {
+            color: #6c757d;
+            font-size: 16px;
+            margin: 0;
+        }
+
+        .qr-content {
+            text-align: center;
+        }
+
+        .qr-code img, .qr-code canvas {
+            max-width: 280px;
+            border: 3px solid #0078d4;
+            border-radius: 12px;
+            padding: 20px;
+            background: white;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .pin-display {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 1px solid #28a745;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+            text-align: center;
+        }
+
+        .pin-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #155724;
+            letter-spacing: 2px;
+            margin: 8px 0;
+        }
+
+        .pin-description {
+            font-size: 12px;
+            color: #155724;
+            opacity: 0.8;
+        }
+
+        .instructions {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 400px;
+            text-align: left;
+        }
+
+        .instructions h4 {
+            color: #856404;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .instructions ol {
+            color: #856404;
+            font-size: 14px;
+            margin-left: 20px;
+            line-height: 1.5;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .result {
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            display: none;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .result.success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 1px solid #28a745;
+            color: #155724;
+        }
+
+        .result.error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 1px solid #dc3545;
+            color: #721c24;
+        }
+
+        .security-note {
+            background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
+            border-left: 4px solid #6c757d;
+            border-radius: 0 6px 6px 0;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .security-note h4 {
+            color: #495057;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .security-note p {
+            color: #6c757d;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #ffffff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Main Issue Card -->
+        <div class="main-card">
+            <div class="card-header">
+                <h1>Issue Verifiable Credential</h1>
+                <p>Create secure digital credentials from verified work or school account information</p>
+            </div>
+            
+            <div class="card-content">
+                <!-- User Profile Section -->
+                <div id="userInfo" class="user-profile" style="display: none;">
+                    <h3>
+                        <span class="status-dot"></span>
+                        Work or School Profile
+                    </h3>
+                    <div class="user-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Name</span>
+                            <span class="detail-value" id="userName">Loading...</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Title</span>
+                            <span class="detail-value" id="userTitle">Loading...</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Email</span>
+                            <span class="detail-value" id="userEmail">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Section -->
+                <div class="action-section">
+                    <div class="section-header">
+                        <h3>Credential Issuance</h3>
+                    </div>
+                    <div class="section-content">
+                        <p class="description">
+                            Your digital credential is created using the verified information from your Microsoft work account.
+                        </p>
+                        
+                        <button id="issueBtn" class="primary-button" onclick="issueCredential()">
+                            Issue Verifiable Credential
+                        </button>
+                        
+                        <div id="issueResult" class="result"></div>
+                        
+                        <!-- QR Code Section - now inside the main card -->
+                        <div id="qrSection" class="qr-code-section" style="display: none;">
+                            <div class="qr-content">
+                                <div id="pinCode" class="pin-display" style="display: none;">
+                                    <div class="pin-value" id="pinValue"></div>
+                                    <div class="pin-description">Enter this PIN if prompted</div>
+                                </div>
+                                
+                                <div id="qrCode" class="qr-code"></div>
+                                
+                                <div class="instructions">
+                                    <h4>Issuance Instructions</h4>
+                                    <ol>
+                                        <li>Open <strong>Microsoft Authenticator</strong> on your mobile device</li>
+                                        <li>Scan the QR code above</li>
+                                        <li id="pinStep" style="display: none;">Enter the PIN code if prompted</li>
+                                        <li>Follow the prompts to add the verifiable credential to your wallet</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="security-note">
+                    <h4>Privacy & Security</h4>
+                    <p>All verification processes use industry-standard cryptographic protocols. No personal data is stored after verification completion. Face biometric data is processed locally and discarded immediately after authentication.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let requestId = null;
+
+        window.addEventListener('DOMContentLoaded', function() {
+            loadUserInfo();
+        });
+
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/user');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.user;
+                    
+                    document.getElementById('userName').textContent = currentUser.displayName || currentUser.name || 'N/A';
+                    document.getElementById('userTitle').textContent = currentUser.jobTitle || currentUser.title || 'N/A';
+                    document.getElementById('userEmail').textContent = currentUser.mail || currentUser.userPrincipalName || currentUser.email || 'N/A';
+                    document.getElementById('userInfo').style.display = 'block';
+                    
+                    console.log('✅ User information loaded:', currentUser);
+                } else {
+                    showError('Authentication required. Please sign in through Azure App Service.');
+                }
+            } catch (error) {
+                console.error('Error loading user info:', error);
+                showError('Failed to load user information. Please refresh the page.');
+            }
+        }
+
+        async function issueCredential() {
+            if (!currentUser) {
+                showError('User not authenticated. Please refresh the page.');
+                return;
+            }
+
+            const issueBtn = document.getElementById('issueBtn');
+            const originalText = issueBtn.innerHTML;
+            
+            try {
+                issueBtn.disabled = true;
+                issueBtn.innerHTML = '<span class="loading-spinner"></span>Creating Verifiable Credential...';
+                
+                document.getElementById('qrSection').style.display = 'none';
+                document.getElementById('issueResult').style.display = 'none';
+                
+                console.log('🎫 Requesting credential issuance...');
+                
+                const response = await fetch('/api/issue-credential', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    requestId = data.requestId;
+                    
+                    const qrCodeContainer = document.getElementById('qrCode');
+                    qrCodeContainer.innerHTML = `<img src="${data.qrCode}" alt="QR Code for credential issuance" style="max-width: 250px; border: 3px solid #1976d2; border-radius: 10px; padding: 15px; background: white; margin: 20px 0;">`;
+                    
+                    if (data.pin) {
+                        document.getElementById('pinValue').textContent = data.pin;
+                        document.getElementById('pinCode').style.display = 'block';
+                        document.getElementById('pinStep').style.display = 'list-item';
+                    } else {
+                        document.getElementById('pinCode').style.display = 'none';
+                        document.getElementById('pinStep').style.display = 'none';
+                    }
+                    
+                    document.getElementById('qrSection').style.display = 'block';
+                    
+                    showSuccess(`✅ Verifiable credential issuance request created!`);
+                    
+                    pollRequestStatus(requestId);
+                    
+                } else {
+                    showError(`Failed to create verifiable credential: ${data.error || data.message}`);
+                }
+
+            } catch (error) {
+                console.error('Error issuing credential:', error);
+                showError(`Error issuing verifiable credential: ${error.message}`);
+            } finally {
+                issueBtn.disabled = false;
+                issueBtn.innerHTML = originalText;
+            }
+        }
+
+        async function pollRequestStatus(requestId) {
+            let attempts = 0;
+            const maxAttempts = 60;
+            
+            const poll = async () => {
+                try {
+                    const response = await fetch(`/api/request-status/${requestId}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        console.log(`📊 Request status: ${data.status}`);
+                        
+                        switch (data.status) {
+                            case 'issuance_successful':
+                                showSuccess('🎉 Verifiable credential issued successfully! Check your Microsoft Authenticator digital wallet.');
+                                return;
+                                
+                            case 'issuance_error':
+                                showError('❌ Verifiable credential issuance failed. Please try again.');
+                                return;
+                                
+                            case 'request_created':
+                                break;
+                                
+                            default:
+                                console.log(`Unknown status: ${data.status}`);
+                        }
+                    }
+                    
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        setTimeout(poll, 5000);
+                    } else {
+                        console.log('⏰ Polling timeout reached');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error polling status:', error);
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        setTimeout(poll, 5000);
+                    }
+                }
+            };
+            
+            setTimeout(poll, 2000);
+        }
+
+        function showSuccess(message) {
+            const resultDiv = document.getElementById('issueResult');
+            resultDiv.className = 'result success';
+            resultDiv.innerHTML = message;
+            resultDiv.style.display = 'block';
+        }
+
+        function showError(message) {
+            const resultDiv = document.getElementById('issueResult');
+            resultDiv.className = 'result error';
+            resultDiv.innerHTML = message;
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

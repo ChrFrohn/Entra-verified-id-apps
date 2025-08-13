@@ -1,0 +1,27 @@
+{
+  "name": "entra-verified-id-dual-apps",
+  "version": "1.0.0",
+  "description": "Dual Azure Web Apps for Microsoft Entra Verified ID - Issue and Verify Credentials",
+  "scripts": {
+    "install-issue": "cd issue-app && npm install",
+    "install-verify": "cd verify-app && npm install", 
+    "install-all": "npm run install-issue && npm run install-verify",
+    "start-issue": "cd issue-app && npm start",
+    "start-verify": "cd verify-app && npm start",
+    "deploy": "az deployment group create --resource-group <your-rg> --template-file infra/azuredeploy.json"
+  },
+  "keywords": [
+    "microsoft",
+    "entra", 
+    "verified-id",
+    "azure",
+    "app-service",
+    "dual-apps"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ChrFrohn/Entra-Verified-ID.git"
+  },
+  "author": "ChrFrohn",
+  "license": "MIT"
+}

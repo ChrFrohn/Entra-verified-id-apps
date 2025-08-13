@@ -1,0 +1,319 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "description": "Deploy dual Microsoft Entra Verified ID applications: Issue App (with Easy Auth) and Verify App (public access) on shared App Service Plan"
+  },
+  "parameters": {
+    "issueAppName": {
+      "type": "string",
+      "defaultValue": "VerifiedID-App-Issue",
+      "metadata": {
+        "description": "Name for the Issue App (for employees to get credentials)"
+      }
+    },
+    "verifyAppName": {
+      "type": "string",
+      "defaultValue": "VerifiedID-App-Verify",
+      "metadata": {
+        "description": "Name for the Verify App (public verification portal)"
+      }
+    },
+    "1_clientId": {
+      "type": "string",
+      "metadata": {
+        "description": "1. CLIENT_ID from PowerShell script (shared by both apps)"
+      }
+    },
+    "2_clientSecret": {
+      "type": "string",
+      "metadata": {
+        "description": "2. CLIENT_SECRET from PowerShell script (shared by both apps)"
+      }
+    },
+    "3_tenantId": {
+      "type": "string",
+      "metadata": {
+        "description": "3. TENANT_ID from PowerShell script (shared by both apps)"
+      }
+    },
+    "4_credentialManifestUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "4. Credential manifest URL from Entra admin center (Issue App only)"
+      }
+    },
+    "5_credentialType": {
+      "type": "string",
+      "defaultValue": "VerifiedEmployee",
+      "metadata": {
+        "description": "5. Credential type from Entra admin center (shared by both apps)"
+      }
+    },
+    "6_didAuthorityUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "6. DID Authority URL from Entra admin center (shared by both apps)"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "B1",
+      "allowedValues": ["F1", "B1", "B2", "B3", "S1", "S2", "S3"],
+      "metadata": {
+        "description": "App Service Plan SKU (shared by both apps) - F1=Free, B1=Basic, S1=Standard"
+      }
+    },
+    "repoUrl": {
+      "type": "string",
+      "defaultValue": "https://github.com/ChrFrohn/Entra-Verified-ID.git",
+      "metadata": {
+        "description": "GitHub repository URL"
+      }
+    },
+    "branch": {
+      "type": "string",
+      "defaultValue": "main",
+      "metadata": {
+        "description": "GitHub branch to deploy"
+      }
+    }
+  },
+  "variables": {
+    "appServicePlanName": "ASP-VerifiedID-Apps",
+    "issueAppName": "[parameters('issueAppName')]",
+    "verifyAppName": "[parameters('verifyAppName')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-03-01",
+      "name": "[variables('appServicePlanName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "tier": "[if(equals(parameters('skuName'), 'F1'), 'Free', if(startsWith(parameters('skuName'), 'B'), 'Basic', 'Standard'))]",
+        "size": "[parameters('skuName')]",
+        "family": "[if(equals(parameters('skuName'), 'F1'), 'F', if(startsWith(parameters('skuName'), 'B'), 'B', 'S'))]",
+        "capacity": 1
+      },
+      "properties": {
+        "reserved": false
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[variables('issueAppName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "nodeVersion": "18-lts",
+          "alwaysOn": "[not(equals(parameters('skuName'), 'F1'))]",
+          "ftpsState": "Disabled",
+          "minTlsVersion": "1.2",
+          "cors": {
+            "allowedOrigins": ["*"],
+            "supportCredentials": false
+          },
+          "appSettings": [
+            {
+              "name": "AZURE_CLIENT_ID",
+              "value": "[parameters('1_clientId')]"
+            },
+            {
+              "name": "AZURE_CLIENT_SECRET",
+              "value": "[parameters('2_clientSecret')]"
+            },
+            {
+              "name": "AZURE_TENANT_ID",
+              "value": "[parameters('3_tenantId')]"
+            },
+            {
+              "name": "DID_AUTHORITY",
+              "value": "[parameters('6_didAuthorityUrl')]"
+            },
+            {
+              "name": "CREDENTIAL_MANIFEST",
+              "value": "[parameters('4_credentialManifestUrl')]"
+            },
+            {
+              "name": "CREDENTIAL_TYPE",
+              "value": "[parameters('5_credentialType')]"
+            },
+            {
+              "name": "ISSUANCE_PIN_CODE_LENGTH",
+              "value": "4"
+            },
+            {
+              "name": "CLIENT_NAME",
+              "value": "Employee Credential Issuance Portal"
+            },
+            {
+              "name": "PURPOSE", 
+              "value": "To issue you with a verified employee credential"
+            },
+            {
+              "name": "APP_URL",
+              "value": "[concat('https://', variables('issueAppName'), '.azurewebsites.net')]"
+            },
+            {
+              "name": "NODE_ENV",
+              "value": "production"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "~18"
+            },
+            {
+              "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+              "value": "true"
+            },
+            {
+              "name": "PROJECT",
+              "value": "issue-app"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "sourcecontrols",
+          "apiVersion": "2022-03-01",
+          "name": "web",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('issueAppName'))]"
+          ],
+          "properties": {
+            "repoUrl": "[parameters('repoUrl')]",
+            "branch": "[parameters('branch')]",
+            "isManualIntegration": true
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[variables('verifyAppName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      ],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "nodeVersion": "18-lts",
+          "alwaysOn": "[not(equals(parameters('skuName'), 'F1'))]",
+          "ftpsState": "Disabled",
+          "minTlsVersion": "1.2",
+          "cors": {
+            "allowedOrigins": ["*"],
+            "supportCredentials": false
+          },
+          "appSettings": [
+            {
+              "name": "AZURE_CLIENT_ID",
+              "value": "[parameters('1_clientId')]"
+            },
+            {
+              "name": "AZURE_CLIENT_SECRET",
+              "value": "[parameters('2_clientSecret')]"
+            },
+            {
+              "name": "AZURE_TENANT_ID",
+              "value": "[parameters('3_tenantId')]"
+            },
+            {
+              "name": "DID_AUTHORITY",
+              "value": "[parameters('6_didAuthorityUrl')]"
+            },
+            {
+              "name": "CREDENTIAL_TYPE",
+              "value": "[parameters('5_credentialType')]"
+            },
+            {
+              "name": "CLIENT_NAME",
+              "value": "Public Credential Verification Portal"
+            },
+            {
+              "name": "PURPOSE", 
+              "value": "To verify the authenticity of your credential"
+            },
+            {
+              "name": "APP_URL",
+              "value": "[concat('https://', variables('verifyAppName'), '.azurewebsites.net')]"
+            },
+            {
+              "name": "NODE_ENV",
+              "value": "production"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "~18"
+            },
+            {
+              "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+              "value": "true"
+            },
+            {
+              "name": "PROJECT",
+              "value": "verify-app"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "sourcecontrols",
+          "apiVersion": "2022-03-01",
+          "name": "web",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('verifyAppName'))]"
+          ],
+          "properties": {
+            "repoUrl": "[parameters('repoUrl')]",
+            "branch": "[parameters('branch')]",
+            "isManualIntegration": true
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "appServicePlanName": {
+      "type": "string",
+      "value": "[variables('appServicePlanName')]"
+    },
+    "issueAppName": {
+      "type": "string",
+      "value": "[variables('issueAppName')]"
+    },
+    "issueAppUrl": {
+      "type": "string",
+      "value": "[concat('https://', variables('issueAppName'), '.azurewebsites.net')]"
+    },
+    "verifyAppName": {
+      "type": "string",
+      "value": "[variables('verifyAppName')]"
+    },
+    "verifyAppUrl": {
+      "type": "string",
+      "value": "[concat('https://', variables('verifyAppName'), '.azurewebsites.net')]"
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "deploymentInstructions": {
+      "type": "string",
+      "value": "Both apps deployed successfully! Configure Easy Auth for the Issue app in Azure Portal. The Verify app is ready for public use."
+    }
+  }
+}

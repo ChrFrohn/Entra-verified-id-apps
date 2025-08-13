@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Credentials - Microsoft Entra Verified ID</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            padding: 32px;
+            line-height: 1.4;
+        }
+
+        .container {
+            max-width: 1400px;
+            width: 85%;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 100%;
+            max-width: 800px;
+            min-width: 600px;
+            min-height: 700px;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            padding: 40px 48px;
+            position: relative;
+        }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .card-header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-header p {
+            font-size: 18px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-content {
+            padding: 48px;
+        }
+
+        .verification-options {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 36px;
+        }
+
+        .verification-options h3 {
+            color: #495057;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 28px;
+            text-align: center;
+        }
+
+        .option-group {
+            margin-bottom: 20px;
+        }
+
+        .option-group label {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            padding: 20px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .option-group label:hover {
+            border-color: #17a2b8;
+            background: #f8f9fa;
+        }
+
+        .option-group input[type="radio"], 
+        .option-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #17a2b8;
+        }
+
+        .option-text {
+            flex: 1;
+        }
+
+        .option-title {
+            font-weight: 600;
+            color: #495057;
+            font-size: 16px;
+            margin-bottom: 6px;
+        }
+
+        .option-desc {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .action-section {
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px 24px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .section-header h3 {
+            color: #495057;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+            text-align: center;
+        }
+
+        .section-content {
+            padding: 32px 24px;
+        }
+
+        .primary-button {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 18px 36px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .primary-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .primary-button:hover::before {
+            left: 100%;
+        }
+
+        .primary-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+        }
+
+        .primary-button:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .qr-section {
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+            display: none;
+        }
+
+        .qr-content {
+            padding: 24px;
+            text-align: center;
+        }
+
+        .qr-code img, .qr-code canvas {
+            max-width: 200px;
+            border: 2px solid #17a2b8;
+            border-radius: 8px;
+            padding: 12px;
+            background: white;
+            margin: 16px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .instructions {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .instructions h4 {
+            color: #856404;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .instructions ol {
+            color: #856404;
+            font-size: 13px;
+            margin-left: 16px;
+        }
+
+        .instructions li {
+            margin-bottom: 4px;
+        }
+
+        .result {
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .result.success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 1px solid #28a745;
+            color: #155724;
+        }
+
+        .result.error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 1px solid #dc3545;
+            color: #721c24;
+        }
+
+        .verification-result {
+            background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
+            border: 1px solid #adb5bd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .verification-result h4 {
+            color: #495057;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .credential-details {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 500;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .detail-value {
+            color: #495057;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .face-check-result {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        .face-check-result.passed {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border: 1px solid #28a745;
+        }
+
+        .face-check-result.failed {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border: 1px solid #dc3545;
+        }
+
+        .security-note {
+            background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
+            border-left: 4px solid #6c757d;
+            border-radius: 0 6px 6px 0;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .security-note h4 {
+            color: #495057;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .security-note p {
+            color: #6c757d;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #ffffff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-card">
+            <div class="card-header">
+                <h1>Verifiable Credential Verification</h1>
+                <p>Verify credentials using Microsoft Authenticator</p>
+            </div>
+            
+            <div class="card-content">
+                <div class="verification-options">
+                    <h3>Credential Verification Methods</h3>
+                    <div class="option-group">
+                        <label for="basicVerification">
+                            <input type="radio" id="basicVerification" name="verificationType" value="basic" checked>
+                            <div class="option-text">
+                                <div class="option-title">Standard Verification</div>
+                                <div class="option-desc">Validate credential authenticity and verify claims</div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div class="option-group">
+                        <label for="faceVerification">
+                            <input type="radio" id="faceVerification" name="verificationType" value="face">
+                            <div class="option-text">
+                                <div class="option-title">Enhanced Verification</div>
+                                <div class="option-desc">Credential validation with live photo comparison</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="action-section">
+                    <div class="section-header">
+                        <h3>Start Verification</h3>
+                    </div>
+                    <div class="section-content">
+                        <button id="verifyBtn" class="primary-button" onclick="verifyCredential()">
+                            Start Verification
+                        </button>
+                    </div>
+                </div>
+
+                <div class="qr-section" id="qrSection">
+                    <div class="section-header">
+                        <h3>Present Credential</h3>
+                    </div>
+                    <div class="qr-content">
+                        <div id="qrCode" class="qr-code"></div>
+                        
+                        <div class="instructions">
+                            <h4>Verification Instructions</h4>
+                            <ol>
+                                <li>Open Microsoft Authenticator app on your mobile device</li>
+                                <li>Scan the QR code above with your device camera or Authenticator app</li>
+                                <li id="faceStep" style="display: none;">Take a live photo when prompted for face verification</li>
+                                <li>Follow the prompts to present your credential</li>
+                                <li>Verification results will appear below automatically</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="verifyResult" class="result"></div>
+
+                <div class="verification-result" id="verificationResult">
+                    <h4>Verification Results</h4>
+                    <div class="credential-details" id="credentialDetails"></div>
+                    <div class="face-check-result" id="faceCheckResult" style="display: none;"></div>
+                </div>
+
+                <div class="security-note">
+                    <h4>Privacy & Security</h4>
+                    <p>All verification processes use industry-standard cryptographic protocols. No personal data is stored after verification completion. Face biometric data is processed locally and discarded immediately after authentication.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let requestId = null;
+
+        async function verifyCredential() {
+
+            const verifyBtn = document.getElementById('verifyBtn');
+            const originalText = verifyBtn.innerHTML;
+            const verificationType = document.querySelector('input[name="verificationType"]:checked').value;
+            const includeFaceCheck = verificationType === 'face';
+            
+            try {
+                verifyBtn.disabled = true;
+                verifyBtn.innerHTML = '<span class="loading-spinner"></span>Starting Verification...';
+                
+                document.getElementById('qrSection').style.display = 'none';
+                document.getElementById('verificationResult').style.display = 'none';
+                document.getElementById('verifyResult').style.display = 'none';
+                
+                console.log(`🔍 Requesting credential verification (Face Check: ${includeFaceCheck})`);
+                
+                const response = await fetch('/api/verify-credential', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        includeFaceCheck: includeFaceCheck
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    requestId = data.requestId;
+                    
+                    const qrCodeElement = document.getElementById('qrCode');
+                    qrCodeElement.innerHTML = `<img src="${data.qrCode}" alt="QR Code for credential verification" style="max-width: 250px; border: 3px solid #007bff; border-radius: 10px; padding: 15px; background: white; margin: 20px 0;">`;
+                    
+                    if (includeFaceCheck) {
+                        document.getElementById('faceStep').style.display = 'list-item';
+                    } else {
+                        document.getElementById('faceStep').style.display = 'none';
+                    }
+                    
+                    document.getElementById('qrSection').style.display = 'block';
+                    
+                    showSuccess(`✅ Verification request created! ${includeFaceCheck ? 'Face verification enabled.' : ''} Present your credential by scanning the QR code.`);
+                    
+                    pollVerificationStatus(requestId);
+                    
+                } else {
+                    showError(`Failed to create verification request: ${data.error || data.message}`);
+                }
+
+            } catch (error) {
+                console.error('Error starting verification:', error);
+                showError(`Error starting verification: ${error.message}`);
+            } finally {
+                verifyBtn.disabled = false;
+                verifyBtn.innerHTML = originalText;
+            }
+        }
+
+        async function pollVerificationStatus(requestId) {
+            let attempts = 0;
+            const maxAttempts = 60;
+            
+            const poll = async () => {
+                try {
+                    const response = await fetch(`/api/request-status/${requestId}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        console.log(`📊 Verification status: ${data.status}`);
+                        
+                        switch (data.status) {
+                            case 'presentation_verified':
+                                displayVerificationResults(data);
+                                return;
+                                
+                            case 'presentation_error':
+                                showError('❌ Credential verification failed. Please try again.');
+                                return;
+                                
+                            case 'request_created':
+                                break;
+                                
+                            default:
+                                console.log(`Unknown status: ${data.status}`);
+                        }
+                    }
+                    
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        setTimeout(poll, 3000);
+                    } else {
+                        console.log('⏰ Polling timeout reached');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error polling verification status:', error);
+                    attempts++;
+                    if (attempts < maxAttempts) {
+                        setTimeout(poll, 3000);
+                    }
+                }
+            };
+            
+            setTimeout(poll, 2000);
+        }
+
+        function displayVerificationResults(data) {
+            if (data.verifiedCredential) {
+                const credential = data.verifiedCredential;
+                const detailsHtml = `
+                    <strong>Name:</strong> <span>${credential.credentialSubject?.displayName || 'Not provided'}</span>
+                    <strong>Email:</strong> <span>${credential.credentialSubject?.mail || 'Not provided'}</span>
+                    <strong>Job Title:</strong> <span>${credential.credentialSubject?.jobTitle || 'Not provided'}</span>
+                    <strong>Type:</strong> <span>${credential.type || 'Unknown'}</span>
+                    <strong>Issuer:</strong> <span>${credential.issuer || 'Unknown'}</span>
+                    <strong>Status:</strong> <span style="color: #28a745; font-weight: 600;">✅ VERIFIED</span>
+                `;
+                
+                document.getElementById('credentialDetails').innerHTML = detailsHtml;
+                
+                if (data.faceCheckResult) {
+                    const faceResult = data.faceCheckResult;
+                    const faceCheckDiv = document.getElementById('faceCheckResult');
+                    
+                    faceCheckDiv.className = `face-check-result ${faceResult.faceCheckPassed ? 'passed' : 'failed'}`;
+                    faceCheckDiv.innerHTML = `
+                        <strong>🔍 Face Verification:</strong> 
+                        ${faceResult.faceCheckPassed ? '✅ PASSED' : '❌ FAILED'} 
+                        (${faceResult.confidence}% confidence)
+                    `;
+                    faceCheckDiv.style.display = 'block';
+                } else {
+                    document.getElementById('faceCheckResult').style.display = 'none';
+                }
+                
+                document.getElementById('verificationResult').style.display = 'block';
+                showSuccess('🎉 Credential verification completed successfully!');
+            } else {
+                showError('❌ No credential data received in verification response.');
+            }
+        }
+
+        function showSuccess(message) {
+            const resultDiv = document.getElementById('verifyResult');
+            resultDiv.className = 'result success';
+            resultDiv.innerHTML = message;
+            resultDiv.style.display = 'block';
+        }
+
+        function showError(message) {
+            const resultDiv = document.getElementById('verifyResult');
+            resultDiv.className = 'result error';
+            resultDiv.innerHTML = message;
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

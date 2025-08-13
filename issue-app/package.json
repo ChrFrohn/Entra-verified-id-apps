@@ -1,0 +1,30 @@
+{
+  "name": "entra-verified-id-issue-app",
+  "version": "1.0.0",
+  "description": "Employee credential issuance app with Azure Easy Auth integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@azure/identity": "^4.0.1",
+    "@azure/msal-node": "^2.16.2",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "axios": "^1.11.0",
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "uuid": "^9.0.1"
+  },
+  "keywords": [
+    "microsoft",
+    "entra",
+    "verified-id",
+    "azure",
+    "issuance",
+    "employee-credentials"
+  ],
+  "author": "ChrFrohn",
+  "license": "MIT"
+}
