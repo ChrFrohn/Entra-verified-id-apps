@@ -145,8 +145,6 @@ The solution utilizes a shared Azure App Service Plan:
 - Two App Service instances
 - Face Check usage fees (when enabled)
 
-Expected monthly cost: $15-50 depending on usage and selected App Service tier.
-
 ## Technical Implementation
 
 The applications are built using Node.js and Express for reliability and ease of maintenance. All credential operations utilize Microsoft's official SDKs to ensure security compliance. QR codes are generated server-side for security, and the architecture avoids local credential data storage by leveraging Microsoft's APIs exclusively.
@@ -159,4 +157,4 @@ You are more than welcome to contribute to the applications or provide feedback 
 
 ## License
 
-MIT License - use and modify as needed for your organization.
+MIT License
