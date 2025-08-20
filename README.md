@@ -2,7 +2,7 @@
 
 For a long time, I have been looking at the Microsoft Entra Verified ID feature. It's a powerful technology that allows you to issue verifiable IDs to your colleagues/employees - think of it as a digital employee ID card. This can then be used to verify that the person who, for example, requests access to an application is who they claim to be.
 
-While Microsoft Entra Verified ID is straightforward to set up in the Entra portal, there's one significant challenge: once you have it configured, there's no out-of-the-box solution for users to actually obtain their verified ID credentials or for others to verify them. That's the gap this project fills.
+While Microsoft Entra Verified ID is straightforward to set up in the Entra portal, there's one significant challenge: once you have it configured, there's no out-of-the-box solution (yet) for users to actually obtain their verified ID credentials or for others to verify them. That's the gap this project fills.
 
 I decided to create a complete web application solution that eliminates the initial development barrier and allows organizations to start experimenting with verifiable credentials right away. This project provides two production-ready web applications that you can fork, deploy, and start using without writing a single line of code.
 
